@@ -4,8 +4,8 @@ let grid = [];
 let next = [];
 const dA = 1;
 const dB = 0.5;
-const feed = 0.029;
-const kill = 0.057;
+const feed = 0.036;
+const kill = 0.060;
 const time = 1;
 
 function setup() {
@@ -72,13 +72,9 @@ function draw() {
       const dilation = 3;
       const pix = (x + y * width) * 4;
 
-      let c = constrain(Math.floor((cell.a - cell.b) * 255), 0, 255)
-      // c = Math.floor(c/25) * 25;
-      if (c > 255 * 2 / 3) {
-        c = 0;
-      } else {
-        c = 255;
-      }
+      let scale = 100;
+      let c = constrain(Math.floor((cell.a - cell.b) * 255), 0, scale) * 255 / scale;
+
       let [
         r1,
         g1,
@@ -99,15 +95,22 @@ function draw() {
         pixels[pix + 6 * dilation],
         pixels[pix + 7 * dilation],
       ];
+
       if (!r1 || r1 !== 0) {
-        pixels[pix] = 255;
+        pixels[pix + 4 * dilation] = 255;
       }
-      pixels[pix] -= c;
+      pixels[pix + 4 * dilation] -= c;
       
       if (!g2 || g2 !== 0) {
         pixels[pix + 5 * dilation] = 255;
       }
       pixels[pix + 5 * dilation] -= c;
+      
+      if (!b2 || b2 !== 0) {
+        pixels[pix + 6 * dilation] = 255;
+      }
+      pixels[pix + 6 * dilation] -= c;
+
 
 
 
