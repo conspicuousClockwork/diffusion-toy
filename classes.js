@@ -6,18 +6,23 @@ class Grid {
     this._width = width;
     this._height = height;
     this._cells = [];
-    for (let y = 0; y < this.height; y++) {
-      for (let x = 0; x < this.width; x++) {
-        this._cells.push(new Cell(x, y, 0, 0))
-      }
-    }
   }
 
   get width() { return this._width; }
   get height() { return this._height; }
+  get cells() { return this._cells; }
+
+  setup = new Promise((resolve, reject) => { try {
+    for (let y = 0; y < this._height; y++) {
+      for (let x = 0; x < this._width; x++) {
+        this._cells.push(new Cell(x, y, 0, 0))
+      }
+    }
+    this._cells.map((cell) => cell.setRefs());   
+  resolve(); } catch(error) { reject(error); }});
 
   cell(x, y) {
-    return this._cells[0];
+    return this._cells[(this._width * y) + x];
   }
 
 }
@@ -39,44 +44,30 @@ class Cell {
   ) {
     this._currentA = a;
     this._currentB = b;
-    this.x = x;
-    this.y = y;
+    this._x = x;
+    this._y = y;
     this.kill = kill;
     this.feed = feed;
-    this.GRID = grid;
-    this.time = time;
+    this._grid = grid;
+    this._time = time;
   }
 
   calc = new Promise((resolve, reject) => {
     try {
-      let cardinal = [
-        this.GRID.cell(this.x, this.y + 1),
-        this.GRID.cell(this.x, this.y - 1),
-        this.GRID.cell(this.x + 1, this.y),
-        this.GRID.cell(this.x - 1, this.y),
-      ];
-
-      let diagonal = [
-        this.GRID.cell(this.x + 1, this.y + 1),
-        this.GRID.cell(this.x - 1, this.y + 1),
-        this.GRID.cell(this.x - 1, this.y - 1),
-        this.GRID.cell(this.x + 1, this.y - 1),
-      ];
-
       this._nextA = constrain(
-        cell.a
-          + (dA * this.laplace(this, cardinal, diagonal, 'a')
-          - cell.a * cell.b * cell.b
-          + this.feed * (1 - cell.a)) * time,
+        this._currentA
+          + (dA * this.laplace('a')
+          - this._currentA * this._currentB * this._currentB
+          + this.feed * (1 - this._currentA)) * time,
         0,
         1,
       );
 
       this._nextB = constrain(
-        cell.b
-          + (dB * this.laplace(this, cardinal, diagonal, 'b')
-          + cell.a * cell.b * cell.b
-          - (this.feed + this.kill) * cell.b) * time,
+        this._currentB
+          + (dB * this.laplace('b')
+          + this._currentA * this._currentB * this._currentB
+          - (this.feed + this.kill) * this._currentB) * time,
         0,
         1,
       );
@@ -84,19 +75,37 @@ class Cell {
     } catch (error) { reject(error); }
   });
 
-  switch = new Promise((resolve, reject) => {
-    
+  update = new Promise((resolve, reject) => {
+    this._currentA = this._nextA;
+    this._currentB = this._nextB;
+
   });
 
-  laplace(cell, cardinal, diagonal, chemical) {
-    return cell[chemical] * -1
-    + cardinal.reduce((sum, cell) => sum += cell[chemical] * 0.2, 0)
-    + diagonal.reduce((sum, cell) => sum += cell[chemical] * 0.05, 0);
+  setRefs() {
+    this._cardinal = [
+      this.grid.cell(this.x, this.y + 1),
+      this.grid.cell(this.x, this.y - 1),
+      this.grid.cell(this.x + 1, this.y),
+      this.grid.cell(this.x - 1, this.y),
+    ];
+
+    this._diagonal = [
+      this.grid.cell(this.x + 1, this.y + 1),
+      this.grid.cell(this.x - 1, this.y + 1),
+      this.grid.cell(this.x - 1, this.y - 1),
+      this.grid.cell(this.x + 1, this.y - 1),
+    ];
+  }
+
+  laplace(chemical) {
+    return this[chemical] * -1
+    + this._cardinal.reduce((sum, cell) => sum += cell[chemical] * 0.2, 0)
+    + this._diagonal.reduce((sum, cell) => sum += cell[chemical] * 0.05, 0);
   }
 
   get a() { return this._currentA; }
   get b() { return this._currentB; }
 
-  set x() { return this.x; }
-  set y() { return this.y; }
+  get x() { return this._x; }
+  get y() { return this._y; }
 }
