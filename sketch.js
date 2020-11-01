@@ -9,6 +9,7 @@ const kill = 0.035;
 
 const time = 1;
 
+// set up grid structures and P5
 function setup() {
   createGrid();
 
@@ -17,6 +18,7 @@ function setup() {
   pixelDensity(1);
 }
 
+// create structures to hold buffer of data
 function createGrid() {
   for (let x = 0; x < width; x++) {
     grid[x] = [];
@@ -94,7 +96,7 @@ function draw() {
   background(51);
   loadPixels();
 
-  
+  // draw every cell for a given generation
   grid.forEach((row, x) => {
     row.forEach((cell, y) => {
       // Calculating the location of this cell in P5's pixel array
